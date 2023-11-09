@@ -1,0 +1,166 @@
+# probReview.r	
+#
+# R examples for probability concepts chapter
+#
+# Core R functions used:
+#
+
+# R packages/functions used
+#
+# mvtnorm
+#   dmvnorm             density of multivariate normal
+#   pmvnorm             CDF of multivariate normal
+#   qmvnorm             quantiles of multivariate normal
+#   rmvnorm             simulate random numbers from multivariate normal
+
+# scatterplot3D
+options(digits = 4)
+
+
+#
+# General normal distribution
+#
+
+# Example: R ~ N(0.01, 0.10)
+mu.r = 0.01
+sd.r = 0.1
+x.vals = seq(-4, 4, length=150)*sd.r + mu.r
+plot(x.vals, dnorm(x.vals, mean=mu.r, sd=sd.r), type="l", lwd=2, 
+     col="blue", xlab="x", ylab="pdf")
+pnorm(-0.5, mean=0.01, sd=0.1)
+pnorm(0, mean=0.01, sd=0.1)
+1 - pnorm(0.5, mean=0.01, sd=0.1)
+1 - pnorm(1, mean=0.01, sd=0.1)
+
+a.vals = c(0.01, 0.05, 0.95, 0.99)
+qnorm(a.vals, mean=0.01, sd=0.10)
+
+
+# 1-1
+mu.r = 0.05
+sd.r = 0.10
+x.vals = seq(-2.5, 3.5, length=150)*sd.r + mu.r
+plot(x.vals, dnorm(x.vals, mean=mu.r, sd=sd.r), type="l", lwd=2, 
+     ylim=c(0, max(dnorm(x.vals, mean=0.025, sd=0.05))),
+     col="black", xlab="x", ylab="pdf")
+points(x.vals, dnorm(x.vals, mean=0.025, sd=0.05), type="l", lwd=2,
+       col="blue", lty="dotted")
+segments(0.02, 0, 0.02, dnorm(0.02, mean=0.05, sd=0.1), lwd=2)
+segments(0.01, 0, 0.01, dnorm(0.01, mean=0.025, sd=0.05), lwd=2, 
+         col="blue", lty="dotted")
+legend(x="topleft", legend=c("Microsofts", "Starbucks"), lwd=2,
+       col=c("black", "blue"), lty=c("solid","dotted"))
+                   
+# 1-2
+# Microsoft 주식의 수익률 분포는 평균이 0.05이고 표준편차가 0.1으로 높은 변동성을 나타냅니다.
+# 따라서 Microsoft 주식은 더 높은 리스크를 가지고 있지만, 더 높은 수익률을 제공합니다. 
+# 반면에, Starbucks 주식 수익률 분포는 평균이 0.025이고 표준편차가 0.05로 Microsoft에 비해 낮은 변동성을 가집니다.
+# 따라서 Starbucks 주식은 더 낮은 리스크를 가지며, 더 낮은 예상 수익률을 제공합니다.
+
+
+# Value-at-Risk calculations
+
+# R(t) ~ N(0.05, (0.10)^2)
+# W = 10000
+w0 = 10000
+# plot return and wealth distributions
+mu.R = 0.05
+sd.R = 0.1
+R.vals = seq(from=(mu.R - 3*sd.R), to=(mu.R + 3*sd.R), length = 100)
+mu.w1 = 10500
+sd.w1 = 1000
+w1.vals = seq(from=(mu.w1 - 3*sd.w1), to=(mu.w1 + 3*sd.w1), length = 100)
+
+par(mfrow=c(2,1))
+# plot return density
+plot(R.vals, dnorm(R.vals, mean=mu.R, sd=sd.R), type="l", 
+     main="R(t) ~ N(0.05,(.10)^2)", xlab="R", ylab="pdf",
+     lwd=2, col="blue")
+# plot wealth density
+plot(w1.vals, dnorm(w1.vals, mean=mu.w1, sd=sd.w1), type="l", 
+     main="W1 ~ N(10,500,(1,000)^2)", xlab="W1", ylab="pdf",
+     lwd=2, col="blue")
+par(mfrow=c(1,1))
+
+
+
+# Pr(W1 < 9000)
+pnorm(9000, mu.w1, sd.w1)
+qnorm(pnorm(9000, mu.w1, sd.w1), mu.w1, sd.w1)
+
+# compute 5% quantile of return and wealth distributions
+q.R.05 = qnorm(0.05, mu.R, sd.R)
+q.R.05
+q.w1.05 = qnorm(0.05, mu.w1, sd.w1)
+q.w1.05
+
+# compute 5% VaR using return quantile
+w0*q.R.05
+
+# compute 5% VaR using wealth quantile
+q.w1.05 - w0
+
+# plot return and loss distributions with VaR
+loss.vals = w0*R.vals
+mu.loss = w0*mu.R
+sd.loss = w0*sd.R
+par(mfrow=c(2,1))
+# plot return density
+plot(R.vals, dnorm(R.vals, mean=mu.R, sd=sd.R), type="l", 
+     main="R(t) ~ N(0.05,(.10)^2)", xlab="R", ylab="pdf",
+     lwd=2, col="blue")
+abline(v=q.R.05, lwd=2, col="red")     
+# plot wealth density
+plot(loss.vals, dnorm(loss.vals, mean=mu.loss, sd=sd.loss), type="l", 
+     main="R*W0 ~ N(500,(1,000)^2)", xlab="W0*R", ylab="pdf",
+     lwd=2, col="blue")
+abline(v=q.R.05*w0, lwd=2, col="red")       
+par(mfrow=c(1,1))
+
+
+# 2
+mu.R = 0.04
+sd.R = 0.09
+w0 = 100000
+q.01.R = mu.R + sd.R*qnorm(0.01)
+q.05.R = mu.R + sd.R*qnorm(0.05)
+VaR.01 = (q.01.R*w0)
+VaR.05 = (q.05.R*w0)
+VaR.01
+VaR.05
+
+# 3-1
+mu.r = 0.04
+sd.r = 0.09
+q.01.R = exp(mu.r + sd.r*qnorm(0.01)) - 1
+q.05.R = exp(mu.r + sd.r*qnorm(0.05)) - 1
+VaR.01 = (q.01.R*w0)
+VaR.05 = (q.05.R*w0)
+VaR.01
+VaR.05
+
+#3-2
+mu_r = 0.04
+sigma_r = 0.09
+W0 = 100000
+
+months_in_year = 12
+mu_a = months_in_year * mu_r
+sigma_a = sqrt(months_in_year) * sigma_r
+
+alpha_1 = 0.01
+alpha_5 = 0.05
+q_1 = qnorm(alpha_1, mean = mu_a, sd = sigma_a)
+q_5 = qnorm(alpha_5, mean = mu_a, sd = sigma_a)
+
+VaR_1_simple = exp(q_1) - 1
+VaR_5_simple = exp(q_5) - 1
+
+VaR_1_yearly = VaR_1_simple * W0
+VaR_5_yearly = VaR_5_simple * W0
+
+print(paste("연간 1% VaR:", VaR_1_yearly))
+print(paste("연간 5% VaR:", VaR_5_yearly))
+
+
+
